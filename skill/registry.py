@@ -17,6 +17,7 @@ import subprocess
 import sys
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import imagehash
 import psycopg
@@ -69,9 +70,9 @@ def designer():
 
 def verdict(rows, block=DEDUP["block"], warn=DEDUP["warn"]):
     """Finished work (approved/old_brand) at >= block blocks; anything else at >= warn warns.
-    Pending rows only warn: a colleague is working on it, the designer decides."""
+    Pending (a colleague is on it) and review (backfill awaiting brand approval) rows only warn."""
     hits = [r for r in rows if r["sim"] >= warn]
-    if any(r["status"] != "pending" and r["sim"] >= block for r in hits):
+    if any(r["status"] in ("approved", "old_brand") and r["sim"] >= block for r in hits):
         return "block"
     return "warn" if hits else "ok"
 
@@ -99,14 +100,15 @@ def recent_layouts(conn, client, n):
     return [r["layout_type"] for r in rows]
 
 
-def check(conn, client, topic, angle="", window=None):
+def check(conn, client, topic, angle="", window=None) -> dict[str, Any]:
     rows = similar(conn, client, embeds(topic, angle))
     return {"verdict": verdict(rows),
             "matches": [r for r in rows if r["sim"] >= DEDUP["warn"]] or rows[:1],
             "avoid_layouts": recent_layouts(conn, client, window or DEDUP["layout_window"])}
 
 
-def reserve(conn, client, topic, angle="", key_points="", layout=None, brand_version=None, force=False):
+def reserve(conn, client, topic, angle="", key_points="", layout=None, brand_version=None,
+            force=False) -> dict[str, Any]:
     res = check(conn, client, topic, angle)
     if res["verdict"] == "block" and not force:
         return res
@@ -125,19 +127,32 @@ def release(conn, id_):
 
 
 CONTENT_TYPES = {".png": "image/png", ".html": "text/html", ".svg": "image/svg+xml", ".jpg": "image/jpeg",
-                 ".pdf": "application/pdf"}
+                 ".pdf": "application/pdf", ".md": "text/markdown", ".css": "text/css", ".json": "application/json",
+                 ".woff2": "font/woff2", ".txt": "text/plain"}
 
 
-def upload(path, key):
+def storage_headers():
     secret = os.environ["SUPABASE_SECRET_KEY"]
-    bucket = CFG["storage"]["bucket"]
+    return {"apikey": secret, "Authorization": f"Bearer {secret}"}
+
+
+def upload(path, key, bucket=None):
+    """path: a file path or raw bytes."""
+    bucket = bucket or CFG["storage"]["bucket"]
     r = requests.post(
         f"{os.environ['SUPABASE_URL']}/storage/v1/object/{bucket}/{key}",
-        data=Path(path).read_bytes(), timeout=60,
-        headers={"apikey": secret, "Authorization": f"Bearer {secret}", "x-upsert": "true",
+        data=path if isinstance(path, bytes) else Path(path).read_bytes(), timeout=60,
+        headers={**storage_headers(), "x-upsert": "true",
                  "Content-Type": CONTENT_TYPES.get(Path(key).suffix, "application/octet-stream")})
     r.raise_for_status()
     return f"{bucket}/{key}"
+
+
+def download(key, bucket=None):
+    r = requests.get(f"{os.environ['SUPABASE_URL']}/storage/v1/object/{bucket or CFG['storage']['bucket']}/{key}",
+                     headers=storage_headers(), timeout=60)
+    r.raise_for_status()
+    return r.content
 
 
 def phash_of(png):
@@ -238,7 +253,7 @@ def main(argv=None):
     s = sub.add_parser("backfill")
     s.add_argument("--client", required=True)
     s.add_argument("--file", required=True)
-    s.add_argument("--status", default="approved", choices=["approved", "old_brand"])
+    s.add_argument("--status", default="approved", choices=["approved", "old_brand", "review"])
     a = p.parse_args(argv)
 
     with connect() if a.cmd != "init" else psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as conn:

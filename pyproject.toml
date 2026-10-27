@@ -1,0 +1,10 @@
+# Tool config only (the skill is not a package). Scripts live in skill/ and import each other by name.
+[tool.pytest.ini_options]
+pythonpath = ["skill"]
+testpaths = ["tests"]
+
+[tool.pyrefly]
+search-path = ["skill"]
+
+[tool.pyright]
+extraPaths = ["skill"]

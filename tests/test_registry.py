@@ -1,12 +1,9 @@
 import os
-import sys
 import uuid
-from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skill"))
-import registry  # noqa: E402
+import registry  # skill/ is on the path via pyproject.toml
 
 TOPIC = "How FCC cuts checkout drop-off with one-tap UPI"
 ANGLE = "Retailer view: fewer steps, higher conversion"
@@ -19,6 +16,7 @@ def test_verdict_rules():
     assert registry.verdict([{"sim": block, "status": "old_brand"}]) == "block"
     assert registry.verdict([{"sim": (block + warn) / 2, "status": "approved"}]) == "warn"
     assert registry.verdict([{"sim": 0.99, "status": "pending"}]) == "warn"
+    assert registry.verdict([{"sim": 0.99, "status": "review"}]) == "warn"  # backfill awaiting brand approval
     assert registry.verdict([{"sim": warn - 0.01, "status": "approved"}]) == "ok"
 
 

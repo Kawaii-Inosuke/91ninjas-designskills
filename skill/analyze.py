@@ -8,8 +8,10 @@
   (Claude views the sheets and writes output/backfill/C/tags.json:
    [{"n": 0, "topic": "...", "angle": "...", "key_points": ["..."], "layout_type": "family/variant"}])
 
-  analyze.py finish --client C [--status approved|old_brand]
-      Merges tags + metrics and inserts via registry.backfill.
+  analyze.py finish --client C [--status approved|old_brand|review] [--yes]
+      Merges tags + metrics. Without --yes it only previews the rows for the designer to approve.
+      Default status: approved if the client's brand pack is already approved, else review
+      (review rows only warn, and become approved when the admin approves the brand pack).
 """
 import argparse
 import json
@@ -97,7 +99,7 @@ def prepare(client, src):
             "next": f"view sheets, write {out / 'tags.json'}, then run: analyze.py finish --client {client}"}
 
 
-def finish(client, status):
+def finish(client, status=None, yes=False):
     out = registry.ROOT / "output/backfill" / client
     metrics = {m["n"]: m for m in json.loads((out / "metrics.json").read_text())}
     tags = json.loads((out / "tags.json").read_text())
@@ -105,7 +107,13 @@ def finish(client, status):
     rows = [{**t, "source": metrics[t["n"]]["source"], "phash": metrics[t["n"]]["phash"],
              "brand_version": t.get("brand_version", version)} for t in tags]
     with registry.connect() as conn:
-        return registry.backfill(conn, client, rows, status)
+        if status is None:
+            live = conn.execute("select 1 from brand_packs where client = %s and status = 'approved'", (client,)).fetchone()
+            status = "approved" if live else "review"
+        if not yes:
+            return {"preview": [{"n": r["n"], "topic": r["topic"], "layout": r.get("layout_type")} for r in rows],
+                    "status": status, "next": f"show this to the designer; on approval rerun with --yes"}
+        return {**registry.backfill(conn, client, rows, status), "status": status}
 
 
 def main():
@@ -116,12 +124,13 @@ def main():
     s.add_argument("--src")
     s = sub.add_parser("finish")
     s.add_argument("--client", required=True)
-    s.add_argument("--status", default="approved", choices=["approved", "old_brand"])
+    s.add_argument("--status", choices=["approved", "old_brand", "review"])
+    s.add_argument("--yes", action="store_true", help="designer approved the preview")
     a = p.parse_args()
     if a.cmd == "prepare":
         out = prepare(a.client, Path(a.src) if a.src else registry.ROOT / "brands" / a.client / "past")
     else:
-        out = finish(a.client, a.status)
+        out = finish(a.client, a.status, a.yes)
     print(json.dumps(out, indent=1))
 
 

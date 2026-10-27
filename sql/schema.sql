@@ -16,7 +16,7 @@ create table if not exists infographics (
   html_url      text,
   source        text,                 -- e.g. Figma frame URL or file name for backfilled rows
   status        text not null default 'pending'
-                check (status in ('pending', 'approved', 'rejected', 'old_brand')),
+                check (status in ('pending', 'approved', 'rejected', 'old_brand', 'review')),
   created_by    text,
   created_at    timestamptz not null default now()
 );
@@ -24,10 +24,10 @@ create table if not exists infographics (
 -- Upgrade tables created from the earlier TRD draft.
 alter table infographics add column if not exists source text;
 alter table infographics add column if not exists topic_embedding vector(384);
-do $$ begin
-  alter table infographics add constraint infographics_status_check
-    check (status in ('pending', 'approved', 'rejected', 'old_brand'));
-exception when duplicate_object then null; end $$;
+-- 'review' = backfilled old work of a brand pack that is waiting for admin approval.
+alter table infographics drop constraint if exists infographics_status_check;
+alter table infographics add constraint infographics_status_check
+  check (status in ('pending', 'approved', 'rejected', 'old_brand', 'review'));
 
 create index if not exists infographics_embedding_idx
   on infographics using hnsw (embedding vector_cosine_ops);
@@ -37,6 +37,22 @@ create index if not exists infographics_client_status_idx
 -- Block access through Supabase's public Data API (publishable key).
 -- registry.py connects directly via DATABASE_URL, which is not subject to RLS as owner.
 alter table infographics enable row level security;
+
+-- Brand packs shared through Supabase Storage (bucket `brands`), so designers need no GitHub.
+-- Files live at brands/<client>/<brand_version>/...; the newest approved version is live.
+create table if not exists brand_packs (
+  client        text not null,
+  brand_version text not null,
+  status        text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  files         jsonb,                -- relative paths uploaded with this version
+  notes         text,                 -- reviewer notes (why rejected)
+  created_by    text,
+  created_at    timestamptz not null default now(),
+  reviewed_by   text,
+  reviewed_at   timestamptz,
+  primary key (client, brand_version)
+);
+alter table brand_packs enable row level security;
 
 -- Optional, admin runs once: restricted role for designers (insert/select/update only).
 -- create role designer login password '...';

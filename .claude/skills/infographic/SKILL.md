@@ -13,13 +13,15 @@ Two hard gates: **outline approval** (step 6) and **final approval** (step 9). N
 Never make an infographic that already exists. Keep token use low: read JSON, view only the 960px preview.
 
 ## 1. Sync
-If the repo has a git remote: `git pull --ff-only` (brand packs live in `brands/`). If it fails or there is no remote, say so in one line and continue.
+- Skill code: if the repo has a git remote, `git pull --ff-only` (the repo is public; no GitHub account needed). If it fails, say so in one line and continue.
+- Brand packs: `.venv/bin/python skill/brands_sync.py pull` installs the newest admin-approved pack of every client from Supabase.
 
 ## 2. Load the brand
 Client folder = lowercase short name (`fcc`). Read, in this order:
 - `brands/<client>/DESIGN.md` (front matter = tokens, `brand_version`, `infographic` block: canvas, layouts, layout_window, icon rules)
 - `brands/<client>/critic_rules.md`, then `skill/critic_rules.md` (brand wins on conflict)
-If the folder does not exist: stop and offer to create it from `brands/_template/` (see "New client").
+If the folder does not exist: stop and offer to create it (see "New client").
+If `brands_sync.py pull` said the local pack is "not approved yet", warn the designer that work made now uses an unreviewed brand.
 
 ## 3. Extract
 From the content part (text, or an image you view once):
@@ -77,12 +79,27 @@ On approval, export the chosen version (default all three; ask only if the desig
 If it reports `visual_duplicates`, show them; use `--force` only if the designer confirms it is different.
 Exports sitting next to the PNG (svg, jpg, pdf) are uploaded too. Report the logged id and all file paths in one line each.
 
-## New client
-1. `cp -r brands/_template brands/<client>`; fill `DESIGN.md` (bump `brand_version` + `updated` on every change) and `critic_rules.md`.
-2. Add `assets/brand.css` (copy FCC's as a start), fonts as `assets/fonts/<Family>-<weight>.woff2`, optional `assets/icons/*.svg`.
-3. Put old infographics (SVG with text not outlined > PNG > JPEG) in `brands/<client>/past/`, then backfill:
-   `skill/analyze.py prepare --client <c>` -> view the contact sheets -> write `output/backfill/<c>/tags.json` -> `skill/analyze.py finish --client <c>`.
+## New client (designer; no GitHub needed)
+Inputs: the brand guideline (PDF/doc/images) and old infographics.
+1. `cp -r brands/_template brands/<client>`. Read the guideline once; fill `DESIGN.md` (tokens, `brand_version: 1.0.0`, `updated`)
+   and `critic_rules.md`. Add `assets/brand.css` (start from FCC's, change only tokens/shapes), fonts as
+   `assets/fonts/<Family>-<weight>.woff2`, optional `assets/icons/*.svg`, the guideline in `source/`.
+2. Put old infographics in `brands/<client>/past/` (SVG with text not outlined > PNG > JPEG).
+   `skill/analyze.py prepare --client <c>` -> view the contact sheets -> write `output/backfill/<c>/tags.json`.
+3. Measure the old work against the guideline (colours, sizes, radii, layouts). Where they disagree, the approved
+   old work wins; list every disagreement for the designer. Render one sample from an old piece's content and compare.
+4. Backfill preview: `skill/analyze.py finish --client <c>` shows the rows. **Designer approves**, then rerun with `--yes`.
+   Rows are saved as `review`: they warn on repeats but only count as approved once the admin approves the brand.
+5. `skill/brands_sync.py submit --client <c>`. Tell the designer: "Submitted for admin review; you can use it now,
+   everyone else gets it after approval."
 
-## Rebrand
-Bump `brand_version`, then mark old work: `update infographics set status='old_brand' where client='<c>' and brand_version <> '<new>'` (admin).
+## Admin: review brand packs (BRAND_ADMIN=1)
+`skill/brands_sync.py list --status pending` -> `review --client <c> --version <v>` (installs it locally) ->
+read DESIGN.md + critic_rules.md, render one sample, show the admin -> on their decision
+`approve --client <c> --version <v>` (backfill rows become approved) or `reject ... --note "why"` (backfill rows deleted).
+Optionally give the admin git commands to commit `brands/<c>/` for history. Never commit or push yourself.
+
+## Brand update / rebrand
+Edit the pack, bump `brand_version` + `updated`, `submit` again; admin approves as above.
+For a full rebrand the admin then marks old work: `update infographics set status='old_brand' where client='<c>' and brand_version <> '<new>'`.
 Old-brand rows still block repeated topics but are not used as style reference.

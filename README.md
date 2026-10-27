@@ -161,9 +161,26 @@ brands/<client>/
 
 ### Add a new client
 
-Ask Claude Code: *"Set up a new client called `<name>` from this brand guide"* and attach the guideline.
-It copies `brands/_template/`, fills in the brand pack, and walks you through backfilling past work.
-Brand changes go through a branch and a pull request; bump `brand_version` and `updated` every time.
+No GitHub account needed. Ask Claude Code:
+
+> Set up a new client called `<name>` from this brand guide, and here are their old infographics.
+
+Attach the guideline (PDF or images) and the old work (SVG with live text is best, or PNG/JPEG).
+
+1. Claude builds the brand pack and checks it against the old work. Where the guide and the approved old work disagree, it follows the old work and lists every difference for you.
+2. **Backfill:** Claude reads the old infographics and records each one's topic and layout. That way the skill never remakes something the client already has. It shows you the list, and you approve it.
+3. Claude **submits the brand for admin review** (to Supabase). You can use it straight away. Everyone else gets it once the admin approves it.
+
+Updating a brand works the same way: edit, bump `brand_version` and `updated`, then submit again.
+
+### Admin review
+
+On the admin's machine (`BRAND_ADMIN=1` in `.env`), ask Claude Code: *"Review pending brands"*.
+Claude installs the submitted pack, renders a sample, and you approve or reject it (with a reason).
+
+- **Approve:** the brand goes live for every designer at the start of their next job, and its backfilled old work starts blocking repeats.
+- **Reject:** the submission and its backfill are removed.
+- **Commit:** optionally commit the brand folder to GitHub for history. Claude gives you the commands.
 
 ---
 
@@ -173,6 +190,7 @@ Brand changes go through a branch and a pull request; bump `brand_version` and `
 .claude/skills/infographic/SKILL.md   the workflow Claude follows (two approval gates)
 skill/registry.py                      shared registry: check, reserve, release, log, list, backfill
 skill/analyze.py                       backfill old infographics (cheap contact-sheet analysis)
+skill/brands_sync.py                   share brand packs via Supabase: pull, submit, admin review/approve/reject
 skill/render.py                        spec → HTML → PNG, automatic checks, revision limit
 skill/brand.py                         reads DESIGN.md into tokens and CSS variables
 skill/templates/                       layout families (structure only; brands style them)
@@ -203,7 +221,8 @@ Run the tests: `.venv/bin/python -m pytest tests -q`.
 
 ## For admins
 
-- **Supabase:** the `infographics` table (`sql/schema.sql`, safe to re-run: `registry.py init`) and a private Storage bucket named `infographics`.
+- **Supabase:** tables `infographics` and `brand_packs` (`sql/schema.sql`, safe to re-run: `registry.py init`), and private Storage buckets `infographics` (finished work) and `brands` (brand packs, created on first submit).
+- **Brand approval** is limited to machines with `BRAND_ADMIN=1`. This is a guard against mistakes, not real security: anyone with the secret key could set it. For real separation, give designers the restricted database role.
 - **Thresholds** in `skill/config.yaml` were tuned on the FCC backfill (block ≥ 0.80, warn ≥ 0.65).
 - **Rebrand:** bump `brand_version`, then mark older rows `old_brand`. They still block repeats but stop being style references.
 - **Security:** keep `.env` out of Git. For a larger team, create the restricted `designer` database role (commented in `schema.sql`) instead of sharing the owner password.

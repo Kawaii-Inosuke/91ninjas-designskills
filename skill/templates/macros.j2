@@ -1,0 +1,18 @@
+{# Markers shared by layouts. size = marker box in px; icons scale with it (brand icon.scale). #}
+{% macro hexagon(size, inner, cls="hex") %}
+<span class="{{ cls }}" style="width:{{ size }}px;height:{{ (size * 1.1547) | round | int }}px">
+  <svg viewBox="0 0 100 115.47" preserveAspectRatio="none" aria-hidden="true">
+    <polygon points="50,2 98,29.4 98,86.1 50,113.5 2,86.1 2,29.4" /></svg>
+  <span class="hex-inner">{{ inner }}</span></span>
+{% endmacro %}
+
+{% macro marker(kind, i, item, size) %}
+{% set num = "%02d" | format(i) %}
+{% if kind == "icon" and item.icon %}<span class="marker icon-tile" style="width:{{ size }}px;height:{{ size }}px">{{ icon(item.icon, size) }}</span>
+{% elif kind == "hex_icon" and item.icon %}{{ hexagon(size, icon(item.icon, size), "hex hex-icon") }}
+{% elif kind == "hex" %}{{ hexagon(size, num) }}
+{% elif kind == "check" %}<span class="marker check">{{ icon("circle-check", size) }}</span>
+{% elif kind == "arrow" %}<span class="marker arrow" style="width:{{ size }}px;height:{{ size }}px"></span>
+{% else %}<span class="marker circle" style="width:{{ size }}px;height:{{ size }}px">{{ num }}</span>
+{% endif %}
+{% endmacro %}

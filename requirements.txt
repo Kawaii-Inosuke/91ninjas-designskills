@@ -1,0 +1,11 @@
+psycopg[binary]>=3.2
+pgvector>=0.3
+sentence-transformers>=3.0
+python-dotenv>=1.0
+pyyaml>=6.0
+requests>=2.32
+imagehash>=4.3
+pillow>=10.0
+playwright>=1.47
+pytest>=8.0
+jinja2>=3.1

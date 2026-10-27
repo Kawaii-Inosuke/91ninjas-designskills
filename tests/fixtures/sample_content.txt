@@ -1,0 +1,7 @@
+How retailers can launch a retail media network
+
+A retail media network (RMN) lets a retailer sell advertising to brands using its own shopper data and digital shelf. Launching one well follows a clear path.
+
+First, audit your first-party data: make sure shopper, transaction and loyalty data are clean, consented and linked to a single customer view. Next, define your ad inventory, such as sponsored product listings, on-site display banners and off-site placements. Then choose your technology stack, deciding whether to build an ad server in-house or partner with a platform. After that, set up self-serve and managed-service options so brands of every size can buy campaigns. Finally, prove results with closed-loop measurement that ties ad exposure to actual purchases.
+
+Retailers that treat their RMN as a product, not a side project, build a new high-margin revenue stream.

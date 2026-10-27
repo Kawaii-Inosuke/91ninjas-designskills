@@ -1,0 +1,8 @@
+{% extends "base.html.j2" %}
+{# variants: (default) grey label column | tint_labels #}
+{% block body %}
+<div class="ctable ctable-{{ variant or 'grey' }}" style="grid-template-columns: {{ '0.8fr ' if table.header | length > 2 }}repeat({{ table.header | length - (1 if table.header | length > 2 else 0) }}, 1fr)">
+  {% for h in table.header %}<div class="cell head">{{ h }}</div>{% endfor %}
+  {% for row in table.rows %}{% for v in row %}<div class="cell {{ 'label' if loop.first else 'data' }}">{{ v }}</div>{% endfor %}{% endfor %}
+</div>
+{% endblock %}

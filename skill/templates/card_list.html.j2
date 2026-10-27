@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}{% from "macros.j2" import marker %}
+{# variants: check | number #}
+{% block body %}
+<ol class="clist clist-{{ variant or 'check' }}">
+{% for it in items %}
+  <li class="clist-row">
+    {% if variant == "number" %}<span class="dot">{{ "%02d" | format(loop.index) }}</span>{% endif %}
+    <div class="card">{% if variant != "number" %}{{ marker("check", loop.index, it, 56) }}{% endif %}
+      <p class="b">{% if it.heading %}<strong class="lead">{{ it.heading }}</strong>{% if it.body %} <i class="flow-arrow"></i> {% endif %}{% endif %}{{ it.body }}</p></div>
+  </li>
+{% endfor %}
+</ol>
+{% endblock %}

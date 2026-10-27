@@ -1,0 +1,14 @@
+{% extends "base.html.j2" %}
+{# variants: pill_header | outline | vs | divider #}
+{% block body %}
+<div class="cmp cmp-{{ variant or 'outline' }}" style="grid-template-columns: repeat({{ columns | length }}, 1fr)">
+{% for c in columns %}
+  <section class="card">
+    <p class="card-title {% if variant in ('pill_header', 'divider') %}pill{% endif %}">{{ c.title }}</p>
+    {% if c.flow %}<p class="flow">{% for f in c.flow %}<span>{{ f }}</span>{% if not loop.last %}<i class="flow-arrow"></i>{% endif %}{% endfor %}</p>{% endif %}
+    <ul class="bullets">{% for x in c["items"] %}<li>{{ x }}</li>{% endfor %}</ul>
+  </section>
+  {% if variant == "vs" and loop.first %}<span class="vs">VS</span>{% endif %}
+{% endfor %}
+</div>
+{% endblock %}

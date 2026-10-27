@@ -1,0 +1,4 @@
+{% extends "base.html.j2" %}
+{# Any shape the designer asks for (staircase, pyramid, hub...). Claude writes spec.html using the
+   brand classes (.card .pill .h .b .bullets .takeaway .marker) and CSS variables only. #}
+{% block body %}{{ spec.html | safe }}{% endblock %}

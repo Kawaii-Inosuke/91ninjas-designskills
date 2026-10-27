@@ -1,0 +1,129 @@
+/* FCC look, measured from brands/fcc/past. Only CSS variables from DESIGN.md; no literal colours. */
+.title-bar { height: 118px; padding: 0 80px; display: flex; align-items: center; justify-content: center;
+  background: var(--color-header-bar); color: var(--color-primary); text-align: center; white-space: nowrap;
+  font-family: var(--font-title-family); font-size: var(--font-title-size); font-weight: var(--font-title-weight); }
+.content { padding: 72px var(--space-page) 88px; display: flex; flex-direction: column; align-items: center;
+  gap: var(--space-section); }
+.content > * { width: 100%; }
+.h { color: var(--color-ink); }
+.b { color: var(--color-ink); }
+
+/* markers */
+.marker { flex: none; display: inline-grid; place-items: center; }
+.marker.circle { border: 3px solid var(--color-accent); border-radius: 50%; background: var(--color-surface);
+  color: var(--color-accent); font-family: var(--font-marker-family); font-size: var(--font-marker-size);
+  font-weight: var(--font-marker-weight); line-height: 1; }
+.marker.icon-tile { background: var(--color-accent); border-radius: var(--radius-sm); color: var(--color-surface); }
+.marker.check { color: var(--color-accent); }
+.marker.arrow { background: var(--color-surface); }
+.marker.arrow::after { content: ""; width: 44%; height: 50%; margin-left: 10%; background: var(--color-accent);
+  clip-path: polygon(0 0, 100% 50%, 0 100%); border-radius: 4px; }
+.hex { position: relative; display: inline-grid; place-items: center; flex: none; color: var(--color-accent);
+  font-family: var(--font-marker-family); font-size: var(--font-marker-size); font-weight: var(--font-marker-weight); }
+.hex > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.hex polygon { fill: var(--color-surface); stroke: var(--color-accent); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.hex-icon polygon { fill: var(--color-tint); stroke-width: 2; }
+.hex-inner { position: relative; display: grid; place-items: center; line-height: 1; }
+
+/* vertical list: marker column + text, dashed connector between markers */
+.vlist { list-style: none; display: grid; gap: 40px; max-width: 1240px; position: relative; }
+.vl-item { display: grid; grid-template-columns: 112px 1fr; gap: 40px; align-items: center; position: relative; }
+.vl-marker { display: grid; place-items: center; position: relative; z-index: 1; }
+.vl-item:not(:last-child)::before { content: ""; position: absolute; left: 54.5px; top: 50%; height: calc(100% + 40px);
+  border-left: 3px dashed var(--color-accent); }
+.vl-text { display: grid; gap: 6px; }
+.vlist-side_rail { padding: 0; }
+.vlist-side_rail::before { content: ""; position: absolute; left: 0; top: -40px; bottom: -40px; width: 112px;
+  background: var(--color-tint); border-radius: var(--radius-md); }
+.vlist-side_rail .vl-item::before { display: none; }
+.vlist-side_rail .marker.circle { background: transparent; }
+
+/* horizontal timeline */
+.htl { display: grid; grid-template-rows: auto auto auto; column-gap: 32px; row-gap: 24px; position: relative; }
+.htl::before { content: ""; position: absolute; left: -80px; right: -80px; top: var(--htl-line, 50%);
+  border-top: 3px solid var(--color-accent); opacity: .5; }
+.htl-alternating::before { border-top-style: dashed; }
+.htl-marker { grid-row: 2; display: grid; place-items: center; position: relative; z-index: 1; }
+.htl-text { text-align: center; display: grid; gap: 4px; align-content: start; }
+.htl-top { grid-row: 1; align-content: end; }
+.htl-bottom { grid-row: 3; }
+.htl-arrow .htl-top, .htl-number .htl-top { display: none; }
+.htl-arrow, .htl-number { grid-template-rows: auto auto; }
+.htl-arrow .htl-marker, .htl-number .htl-marker { grid-row: 1; }
+.htl-arrow .htl-bottom, .htl-number .htl-bottom { grid-row: 2; }
+.htl-arrow::before, .htl-number::before { top: 36px; }
+
+/* comparison cards */
+.cmp { display: grid; column-gap: 48px; align-items: stretch; max-width: 1400px; position: relative; }
+.cmp .card { border-radius: var(--radius-md); padding: 48px 56px; display: grid; gap: 28px; align-content: start; }
+.cmp .card-title { font-size: var(--font-heading-size); font-weight: 500; text-align: center; color: var(--color-primary); }
+.cmp-outline .card { border: 3px solid var(--color-accent); background: var(--color-surface); }
+.cmp-pill_header { row-gap: 0; margin-top: 40px; }
+.cmp-pill_header .card { background: var(--color-tint); border: 3px solid color-mix(in srgb, var(--color-line) 50%, transparent);
+  padding-top: 0; }
+.cmp-pill_header .card-title { justify-self: center; margin-top: -40px; padding: 20px 56px; }
+.cmp-vs { grid-template-columns: 1fr 1fr !important; }
+.cmp-vs .card { background: var(--color-tint); border: 3px solid var(--color-accent); }
+.vs { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px;
+  border-radius: 50%; display: grid; place-items: center; background: var(--color-accent); color: var(--color-surface);
+  font-size: 72px; font-weight: 600; outline: 16px solid var(--color-surface); }
+.cmp-divider { column-gap: 96px; }
+.cmp-divider .card { border: 3px solid var(--color-accent); background: var(--color-surface); padding: 0 0 48px; overflow: hidden; }
+.cmp-divider .card-title { border-radius: 0; padding: 18px; }
+.cmp-divider .bullets { padding: 0 56px; }
+.cmp-divider .card + .card::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+  border-left: 3px dashed var(--color-accent); opacity: .5; }
+.pill { background: var(--color-secondary); color: var(--color-on-primary); border-radius: var(--radius-md);
+  font-weight: 500; text-align: center; }
+.cmp-divider .pill { background: var(--color-accent); }
+.flow { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 16px 24px;
+  background: var(--color-tint); border-radius: var(--radius-sm); }
+.flow-arrow { display: inline-block; width: 36px; height: 3px; background: var(--color-primary); position: relative;
+  vertical-align: middle; }
+.flow-arrow::after { content: ""; position: absolute; right: -2px; top: -7px; border: 8px solid transparent;
+  border-left: 12px solid var(--color-primary); border-right: 0; }
+
+/* cell table */
+.ctable { display: grid; gap: 12px; max-width: 1500px; }
+.cell { border-radius: 4px; padding: 30px 36px; text-align: center; display: grid; place-items: center;
+  background: var(--color-cell); font-size: 28px; line-height: 1.4; }
+.cell.head { background: var(--color-primary); color: var(--color-on-primary); font-weight: 600; font-size: 30px; padding: 22px 36px; }
+.cell.label { font-weight: 600; }
+.ctable-tint_labels .cell.label { background: var(--color-tint); font-weight: 400; }
+
+/* card list */
+.clist { list-style: none; display: grid; gap: 28px; max-width: 1300px; }
+.clist-check { max-width: 940px; }
+.clist-row { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; position: relative; }
+.clist-check .clist-row { grid-template-columns: 1fr; }
+.clist .card { display: flex; align-items: center; gap: 28px; padding: 30px 40px; border-radius: var(--radius-sm); }
+.clist-check .card { background: var(--color-cell); }
+.clist-number .card { background: var(--color-tint); }
+.clist .lead { color: var(--color-primary); font-weight: 600; }
+.dot { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--color-primary);
+  color: var(--color-on-primary); font-size: 22px; font-weight: 600; position: relative; z-index: 1; }
+.clist-number .clist-row:not(:last-child)::before { content: ""; position: absolute; left: 26.5px; top: 50%;
+  height: calc(100% + 28px); border-left: 3px dashed var(--color-accent); }
+
+/* three-column grid */
+.grid3 { display: grid; gap: 40px; max-width: 1500px; align-items: start; }
+.g3-col { display: grid; gap: 20px; }
+.g3-head { background: var(--color-primary); padding: 26px; border-radius: var(--radius-sm); font-weight: 600; }
+.g3-body { background: var(--color-cell); border-radius: var(--radius-sm); padding: 36px 40px; }
+
+/* takeaway */
+.takeaway { max-width: 1180px; padding: 32px 56px; text-align: center; background: var(--color-tint);
+  border: 2px solid var(--color-accent); border-radius: var(--radius-sm); }
+
+/* fixes from critic pass: keep text clear of the VS circle; balanced wrapping */
+.cmp-vs .card:first-of-type { padding-right: 140px; }
+.cmp-vs .card:last-of-type { padding-left: 140px; }
+.title-bar, .h, .takeaway, .card-title, .cell, .htl-text .b { text-wrap: balance; }
+
+/* staircase (custom layout helper): steps rise left to right */
+.stairs { display: flex; align-items: flex-end; gap: 24px; max-width: 1500px; }
+.stairs .card { flex: 1; background: var(--color-tint); border-radius: var(--radius-md); padding: 32px;
+  display: grid; gap: 10px; align-content: start; border-top: 6px solid var(--color-accent); }
+.stairs .card .marker { justify-self: start; }
+/* timelines run wider than the content block, like the past PO-components piece */
+.htl { width: 1760px; max-width: none; align-self: center; }

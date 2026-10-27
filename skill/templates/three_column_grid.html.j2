@@ -1,0 +1,9 @@
+{% extends "base.html.j2" %}
+{% block body %}
+<div class="grid3" style="grid-template-columns: repeat({{ columns | length }}, 1fr)">
+{% for c in columns %}
+  <section class="g3-col"><p class="pill g3-head">{{ c.title }}</p>
+    <div class="card g3-body">{% if c["items"] | length > 1 %}<ul class="bullets">{% for x in c["items"] %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}<p class="b">{{ c["items"][0] }}</p>{% endif %}</div></section>
+{% endfor %}
+</div>
+{% endblock %}

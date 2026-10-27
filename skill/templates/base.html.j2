@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+{{ font_faces }}
+{{ css_vars }}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--color-surface); }
+body { width: {{ width }}px; font-family: var(--font-body-family); font-size: var(--font-body-size);
+       font-weight: var(--font-body-weight); line-height: var(--font-body-line); color: var(--color-ink);
+       -webkit-font-smoothing: antialiased; }
+#canvas { width: {{ width }}px; background: var(--color-surface); overflow: hidden; }
+.content { max-width: {{ content_max }}px; margin: 0 auto; }
+.h { font-family: var(--font-heading-family); font-size: var(--font-heading-size);
+     font-weight: var(--font-heading-weight); line-height: var(--font-heading-line); }
+.b { font-size: var(--font-body-size); line-height: var(--font-body-line); }
+ul.bullets { list-style: none; display: grid; gap: 14px; }
+ul.bullets li { position: relative; padding-left: 30px; }
+ul.bullets li::before { content: ""; position: absolute; left: 6px; top: .62em; width: 9px; height: 9px;
+                        border-radius: 50%; background: currentColor; }
+{{ brand_css }}
+{{ spec.css | default('') | safe }}
+</style></head>
+<body><div id="canvas">
+  <header class="title-bar">{{ spec.title }}</header>
+  <main class="content layout-{{ spec.layout | replace('/', '-') }}">
+    {% block body %}{% endblock %}
+    {% if spec.takeaway %}<div class="takeaway">{{ spec.takeaway }}</div>{% endif %}
+  </main>
+</div></body></html>

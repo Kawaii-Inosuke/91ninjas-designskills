@@ -1,0 +1,27 @@
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2   # pinned: same vectors for every designer
+  dim: 384
+
+dedup:
+  block: 0.80             # approved/old_brand match >= block -> stop (calibrated on FCC backfill)
+  warn: 0.65              # any match >= warn -> warn with closest match
+  layout_window: 4        # avoid layouts used in last N approved (brand can override)
+  phash_max_distance: 8   # visual near-duplicate if Hamming distance <= this
+  pending_ttl_days: 7     # stale pending reservations stop counting after this
+
+render:
+  default_canvas: {width: 1080, height: auto}   # fallback; brand DESIGN.md overrides
+  device_scale_factor: 1
+  max_height: 6000
+
+critic:
+  max_revisions: 3
+  preview_width: 960      # Claude reviews a downscaled preview to save tokens
+
+storage:
+  bucket: infographics
+
+paths:
+  brands: brands
+  templates: skill/templates
+  output: output

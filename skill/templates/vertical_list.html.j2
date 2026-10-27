@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}{% from "macros.j2" import marker %}
+{# variants: icon | hex_icon | number | hex | side_rail #}
+{% block body %}
+{% set kind = {"icon": "icon", "hex_icon": "hex_icon", "hex": "hex", "side_rail": "number"}.get(variant, "number") %}
+<ol class="vlist vlist-{{ variant or 'number' }}">
+{% for it in items %}
+  <li class="vl-item">
+    <span class="vl-marker">{{ marker(kind, loop.index, it, 96) }}</span>
+    <div class="vl-text">{% if it.heading %}<p class="h">{{ it.heading }}</p>{% endif %}{% if it.body %}<p class="b">{{ it.body }}</p>{% endif %}</div>
+  </li>
+{% endfor %}
+</ol>
+{% endblock %}

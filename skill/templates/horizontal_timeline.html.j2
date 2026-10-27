@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}{% from "macros.j2" import marker %}
+{# variants: arrow (labels below) | alternating (hex numbers, labels above/below) | number #}
+{% block body %}
+{% set kind = {"arrow": "arrow", "alternating": "hex"}.get(variant, "number") %}
+<div class="htl htl-{{ variant or 'number' }}" style="grid-template-columns: repeat({{ items | length }}, 1fr)">
+{% for it in items %}
+  {% set up = variant == "alternating" and loop.index is odd %}
+  <div class="htl-text htl-top" style="grid-column: {{ loop.index }}">{% if up %}{% if it.heading %}<p class="h">{{ it.heading }}</p>{% endif %}<p class="b">{{ it.body }}</p>{% endif %}</div>
+  <div class="htl-marker" style="grid-column: {{ loop.index }}">{{ marker(kind, loop.index, it, 88 if kind == "hex" else 72) }}</div>
+  <div class="htl-text htl-bottom" style="grid-column: {{ loop.index }}">{% if not up %}{% if it.heading %}<p class="h">{{ it.heading }}</p>{% endif %}<p class="b">{{ it.body }}</p>{% endif %}</div>
+{% endfor %}
+</div>
+{% endblock %}

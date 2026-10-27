@@ -1,5 +1,6 @@
 # Infographic skill repo
 
+- History and decisions (read before changing things): `docs/PROJECT_HISTORY.md`.
 - Workflow: `.claude/skills/infographic/SKILL.md`. Code: `skill/` (Python, run with `.venv/bin/python`, or `.venv\Scripts\python` on Windows).
 - Brand packs: `brands/<client>/` (DESIGN.md, critic_rules.md, assets/, past/). `brands/_template/` for new clients.
 - `reference/` is read-only inspiration (git-ignored); never install or run it.

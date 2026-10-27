@@ -6,7 +6,9 @@ argument-hint: "<client> <content text or image path>"
 
 # Infographic skill
 
-Run every command from the repo root with `.venv/bin/python`. All scripts print JSON.
+Run every command from the repo root with the project Python: `.venv/bin/python` on macOS/Linux/web,
+`.venv\Scripts\python` on Windows (written as `.venv/bin/python` below). All scripts print JSON.
+If `.venv` is missing, tell the designer to run `bash scripts/setup.sh` (Mac/web) or `scripts\setup.ps1` (Windows) first.
 Two hard gates: **outline approval** (step 6) and **final approval** (step 9). Nothing is logged without the second.
 Never make an infographic that already exists. Keep token use low: read JSON, view only the 960px preview.
 

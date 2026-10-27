@@ -66,10 +66,16 @@ Stop at 0 FAILs or when `render.py` reports the revision limit; then pick the be
 Give the designer the full-size PNG path and HTML path, the layout used, and any rule you could not satisfy.
 Options: approve, request changes (back to step 7; the revision limit can be lifted with `--force` only if the designer asks), or abandon (release).
 
+## 9b. Export
+On approval, export the chosen version (default all three; ask only if the designer named formats):
+`.venv/bin/python skill/render.py export --html <vN.html> --formats svg,jpeg,pdf`
+- **SVG**: live, editable text (Inter + weights) for small fixes in Figma or Illustrator.
+- **JPEG**: for channels that need it. **PDF**: vector, for print or review. **PNG** already exists.
+
 ## 10. Log
 `.venv/bin/python skill/registry.py log --id <id> --png <vN.png> --html <vN.html> --layout <family/variant> --brand-version <v>`
 If it reports `visual_duplicates`, show them; use `--force` only if the designer confirms it is different.
-Report the logged id in one line.
+Exports sitting next to the PNG (svg, jpg, pdf) are uploaded too. Report the logged id and all file paths in one line each.
 
 ## New client
 1. `cp -r brands/_template brands/<client>`; fill `DESIGN.md` (bump `brand_version` + `updated` on every change) and `critic_rules.md`.

@@ -2,6 +2,7 @@
 
   render.py build --spec spec.json [--force]   next version vN in output/<client>/<slug>/
   render.py icons <word> [<word>...]           search icon names (Tabler, restyled per brand)
+  render.py export --html vN.html [--formats svg,jpeg,pdf]   editable SVG (live text), print PDF, JPEG
 
 Spec (written by Claude from the outline):
   {"client": "fcc", "title": "...", "layout": "vertical_list/number",
@@ -144,6 +145,55 @@ def build(spec, force=False):
             "critic_rules": [str(p) for p in tokens["critic_rules"]], "revisions_left": max_v - n}
 
 
+WEIGHTS = {"thin": 100, "extralight": 200, "light": 300, "medium": 500, "semibold": 600, "bold": 700,
+           "extrabold": 800, "black": 900}
+
+
+def editable_svg(pdf_path, width):
+    """PDF page -> SVG with live <text> (editable in Figma/Illustrator), sized in px, fonts as family + weight."""
+    import pymupdf
+    page = pymupdf.open(pdf_path)[0]
+    svg = page.get_svg_image(text_as_path=False)
+    height = round(page.rect.height * width / page.rect.width)
+    svg = re.sub(r'(<svg[^>]*?)\swidth="[^"]*"\s+height="[^"]*"', rf'\1 width="{width}" height="{height}"', svg, count=1)
+
+    def font(m):
+        family, _, style = m.group(1).rpartition(" ")
+        w = WEIGHTS.get(style.lower().replace("-", ""))
+        return f'font-family="{family}" font-weight="{w}"' if family and w else m.group(0)
+    return re.sub(r'font-family="([^"]+)"', font, svg)
+
+
+def export(html, formats):
+    """Export an approved version (vN.html) as svg / pdf / jpeg next to it. PNG already exists."""
+    from playwright.sync_api import sync_playwright
+    html = Path(html).resolve()
+    width = int(re.search(r"body \{ width: (\d+)px", html.read_text()).group(1))
+    files = {}
+    if {"svg", "pdf"} & set(formats):
+        pdf = html.with_suffix(".pdf")
+        with sync_playwright() as p:
+            b = p.chromium.launch()
+            page = b.new_page(viewport={"width": width, "height": 400})
+            page.goto(html.as_uri())
+            page.evaluate("document.fonts.ready")
+            h = page.evaluate("document.querySelector('#canvas').scrollHeight")
+            page.pdf(path=str(pdf), width=f"{width}px", height=f"{h + 1}px", print_background=True, page_ranges="1",
+                     margin={k: "0" for k in ("top", "right", "bottom", "left")})
+            b.close()
+        if "svg" in formats:
+            files["svg"] = html.with_suffix(".svg")
+            files["svg"].write_text(editable_svg(pdf, width))
+        if "pdf" in formats:
+            files["pdf"] = pdf
+        else:
+            pdf.unlink()
+    if "jpeg" in formats or "jpg" in formats:
+        files["jpeg"] = html.with_suffix(".jpg")
+        Image.open(html.with_suffix(".png")).convert("RGB").save(files["jpeg"], quality=95)
+    return {k: str(v) for k, v in files.items()}
+
+
 def main():
     p = argparse.ArgumentParser(description="Render infographic")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -151,10 +201,15 @@ def main():
     s.add_argument("--spec", required=True)
     s.add_argument("--force", action="store_true")
     sub.add_parser("icons").add_argument("words", nargs="+")
+    s = sub.add_parser("export")
+    s.add_argument("--html", required=True)
+    s.add_argument("--formats", default="svg,jpeg,pdf")
     a = p.parse_args()
     if a.cmd == "icons":
         names = sorted(f.stem for f in ICONS.glob("*.svg"))
         out = {w: [n for n in names if w in n][:15] for w in a.words}
+    elif a.cmd == "export":
+        out = export(a.html, [f.strip().lower() for f in a.formats.split(",")])
     else:
         out = build(json.loads(Path(a.spec).read_text()), a.force)
     print(json.dumps(out, indent=1))

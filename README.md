@@ -58,6 +58,14 @@ Ask the admin for the three secret values that go in `.env` (see [Configure](#co
 
 You can also use the Claude Code extension for VS Code or JetBrains. Open the cloned folder in the editor and the skill works the same way.
 
+### Let Claude Code install it for you
+
+Once Git, Python and Claude Code are installed, a designer can open Claude Code in any folder and say:
+
+> Clone https://github.com/Kawaii-Inosuke/91ninjas-designskills.git and set it up.
+
+Claude reads `CLAUDE.md` in the repo, runs the right setup script for the machine, and asks the designer to paste the secrets into `.env`. Secrets go in the file, never in the chat. Claude then checks the connection. After that, open Claude Code inside the repo folder to use the skill.
+
 ### Claude Code on the web (claude.ai/code)
 
 1. Go to https://claude.ai/code and connect your GitHub account.
@@ -114,9 +122,23 @@ What happens:
 | Direction | Only if the shape is unclear, it asks one question (e.g. "timeline or staircase?"). Any shape you ask for gets built. |
 | Render + critic | It renders, checks against the brand rules, and fixes up to 3 times. |
 | Final | Path to the PNG and HTML. **Approve, request changes, or abandon.** |
-| Log | Approved work is uploaded and registered for the whole team. |
+| Export | SVG, JPEG and PDF are created next to the PNG. |
+| Log | Approved work and all exports are uploaded and registered for the whole team. |
 
 Drafts are saved locally in `output/<client>/<topic>/` (v1, v2…).
+
+### Export formats
+
+| Format | Use it for |
+|---|---|
+| **SVG** | Small fixes by a designer. Text stays live and editable (Inter, correct weights) in Figma or Illustrator. |
+| **PNG** | Default upload for social and blogs (exact pixels). |
+| **JPEG** | Channels that only take JPEG. |
+| **PDF** | Vector version for print or review. |
+
+Export any version by hand: `.venv/bin/python skill/render.py export --html output/<client>/<topic>/v2.html --formats svg,jpeg,pdf`
+
+The SVG uses the font by name. Figma has Inter built in. For Illustrator, install the fonts from `brands/<client>/assets/fonts/`.
 
 ---
 

@@ -124,6 +124,10 @@ def release(conn, id_):
     return {"released": bool(row), "id": id_}
 
 
+CONTENT_TYPES = {".png": "image/png", ".html": "text/html", ".svg": "image/svg+xml", ".jpg": "image/jpeg",
+                 ".pdf": "application/pdf"}
+
+
 def upload(path, key):
     secret = os.environ["SUPABASE_SECRET_KEY"]
     bucket = CFG["storage"]["bucket"]
@@ -131,7 +135,7 @@ def upload(path, key):
         f"{os.environ['SUPABASE_URL']}/storage/v1/object/{bucket}/{key}",
         data=Path(path).read_bytes(), timeout=60,
         headers={"apikey": secret, "Authorization": f"Bearer {secret}", "x-upsert": "true",
-                 "Content-Type": "image/png" if key.endswith(".png") else "text/html"})
+                 "Content-Type": CONTENT_TYPES.get(Path(key).suffix, "application/octet-stream")})
     r.raise_for_status()
     return f"{bucket}/{key}"
 
@@ -163,7 +167,10 @@ def log(conn, id_, png, html, layout=None, brand_version=None, force=False):
                   layout_type = coalesce(%s, layout_type), brand_version = coalesce(%s, brand_version)
            where id = %s""",
         (ph, upload(png, f"{key}.png"), upload(html, f"{key}.html"), layout, brand_version, id_))
-    return {"logged": True, "id": id_, "phash": ph}
+    # exports from `render.py export` sit next to the PNG; stored at the same key with their own extension
+    extras = [upload(p, f"{key}{p.suffix}") for p in (Path(png).with_suffix(s) for s in (".svg", ".jpg", ".pdf"))
+              if p.exists()]
+    return {"logged": True, "id": id_, "phash": ph, "exports": extras}
 
 
 def list_rows(conn, client, status=None, limit=20):

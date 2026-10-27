@@ -5,3 +5,8 @@ __pycache__/
 .venv/
 output/
 .pytest_cache/
+
+# internal planning docs (keep local)
+01-PRD.md
+02-TRD.md
+03-ARCHITECTURE.md

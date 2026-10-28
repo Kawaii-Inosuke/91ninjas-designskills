@@ -38,6 +38,7 @@ The build followed the original 8-step plan, with an approval gate at every step
 | 7 | `skill/render.py`, layout templates, FCC `brand.css`, icons, critic loop | Rebuilt 6 past FCC pieces to verify |
 | 8 | `SKILL.md`, end-to-end test (retail media network), logged | Critic caught a real bug in v1 |
 | after | README, setup scripts, exports, brand sharing via Supabase, editor fixes | See sections 6–9 |
+| Oct 28 | 5-piece FCC test run, icon scale fix for custom layouts, type-checker fixes | See section 9 |
 
 ---
 
@@ -74,6 +75,7 @@ The build followed the original 8-step plan, with an approval gate at every step
 - **Templates hold structure only; each brand's look is in `brands/<client>/assets/brand.css`.** A new client needs no new templates.
 - **Icons:** about 5,200 Tabler icons (MIT) kept in `skill/icons/`, restyled to the brand colour and stroke, and sized as
   about 0.6× the item they sit in. Icons in `brands/<client>/assets/icons/` are used first.
+  Custom layouts must insert icons as `{{ icon('name', <tile px>) }}`, never pasted SVG, so the brand scale applies.
 - **Fonts are kept in the brand pack** (`assets/fonts/<Family>-<weight>.woff2`), so every designer's output is identical.
 - **Automatic checks** run on every render at no token cost: wrong font, colour outside the palette, text overflow, outside
   the canvas, text under 20px, invisible icons, canvas too tall.
@@ -199,3 +201,51 @@ Designer (Claude Code, inside this repo)
 - **Reusable layouts:** S-curve, hexagon zig-zag and central spine currently render through `custom`; they could become templates.
 - **Public repo:** `brands/fcc/past/` and `brands/fcc/source/` are public. Add them to `.gitignore` if they are confidential.
 - **v2 (parked):** animated or web infographics using the animation repos in `reference/`.
+- **ZIP installs don't update:** step 1's `git pull` only works for a clone. A designer who downloaded a ZIP gets brand
+  updates (Supabase) but no code updates. Possible fix: an update script that downloads the latest ZIP when the folder
+  is not a git repo, keeping `.env`, `.venv`, `output/` and `brands/`.
+- **Output naming is not in the skill yet** (see section 9). Until it is added to SKILL.md, only `output/<client>/<slug>/vN.*` is produced.
+- **False "font not loaded" warning:** the auto check probes weight 400 only, so pieces with no regular-weight text
+  (e.g. the hub and formula pieces) always warn. Fix: check only the weights the page uses.
+- **Fallback values match FCC:** `render.py` falls back to icon scale 0.6, stroke 1.5 and content width 1500 when a
+  brand's DESIGN.md leaves them out. `brands/_template/` should state them so new clients don't inherit FCC's silently.
+  The auto checks' 20px minimum text and always-allowed white apply to every brand.
+
+---
+
+## 9. Oct 28 session: test run and fixes
+
+### Updates for designers without GitHub
+- The repo is public, so anyone can `git clone` / `git pull` over **HTTPS** without an account (SSH needs one).
+- Every job already runs `git pull --ff-only` (code) and `brands_sync.py pull` (approved brands) in step 1, so an
+  approved brand reaches everyone on their next job with no action. Only ZIP installs miss code updates (section 8).
+
+### Can the skill design without directions?
+Yes. It infers the layout from the shape of the content, asks only when two shapes fit equally, builds any
+requested shape through `custom`, and never repeats the previous layout family. It cannot invent a new visual
+style: every layout stays inside the brand pack.
+
+### Test run: 5 FCC pieces (not logged to the registry)
+Dedup check found no repeats (#4 warned on "pricing" against *Building a value-based pricing strategy*, a different topic).
+
+| Piece | Layout | Critic findings fixed |
+|---|---|---|
+| Top customer acquisition strategies for retailers | hub and spoke (`custom`) | middle connectors too short; icons too thick (see below) |
+| How to calculate customer acquisition cost (CAC) | equation strip (`custom`) | "acquisition-" broke at the hyphen (non-breaking hyphen) |
+| Why food and beverage pricing is challenging | `vertical_list/icon` | list hugged the left (centred with `width: auto`) |
+| High-low pricing strategy in action | price-over-time chart (`custom`, inline SVG, no invented numbers) | stray `#000000` fill on lines |
+| CDP vs CRM vs DMP | `cell_table` | table too narrow, 4–5 line cells (widened to 1720px) |
+
+### Output naming (agreed with the designer)
+Final files are copied to `output/` (git-ignored) as `<kind> - <alt text>.<ext>`, where kind is `infographic` or `table`.
+Without alt text: `<kind> - <date>`; with more than one of that kind for the client on the same day:
+`<kind> - <number> - <date>`. Same name for PNG, SVG, JPEG and PDF.
+
+### Fixes in code
+- **Icon thickness in custom layouts:** custom markup pasted icons at full tile size, skipping the brand's 0.6 scale,
+  so strokes were about 1.7× too heavy. `render.py` now renders custom `html` through Jinja so `icon()` applies the
+  brand scale and stroke; SKILL.md step 7 says to use it.
+- **Pyrefly errors in `render.py` (10):** typed `GLOBALS` / `BRAND_DIR` instead of untyped Jinja globals,
+  `Image.Resampling.LANCZOS`, a clear error when exporting a page not made by `render.py`, explicit PDF margins.
+  Output is byte-identical; tests pass.
+- **Audit:** no FCC rules are hard-coded in `render.py` or the templates; everything comes from the brand pack.

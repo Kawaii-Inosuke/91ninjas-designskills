@@ -19,6 +19,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import jinja2
 from markupsafe import Markup
@@ -31,12 +32,14 @@ from registry import CFG, ROOT  # noqa: E402
 ICONS = ROOT / "skill/icons/tabler"
 ENV = jinja2.Environment(loader=jinja2.FileSystemLoader(ROOT / CFG["paths"]["templates"]),
                          autoescape=True, trim_blocks=True, lstrip_blocks=True)
+GLOBALS = cast("dict[str, Any]", ENV.globals)  # typed view; templates read icon() from here
+BRAND_DIR = {"dir": ROOT / "brands/_template"}  # set per build by build_html
 
 
 def icon(name, size, stroke=1.5):
     """Inline any SVG icon in brand style: currentColor strokes, one stroke weight, given size.
     Looks in the brand's assets/icons first (designer-supplied), then Tabler."""
-    paths = [p for p in (ENV.globals["brand_dir"] / "assets/icons" / f"{name}.svg", ICONS / f"{name}.svg") if p.exists()]
+    paths = [p for p in (BRAND_DIR["dir"] / "assets/icons" / f"{name}.svg", ICONS / f"{name}.svg") if p.exists()]
     if not paths:
         return ""
     svg = paths[0].read_text()
@@ -58,10 +61,11 @@ def font_faces(brand_dir):
 def build_html(spec, tokens):
     ig = tokens.get("infographic", {})
     ic = ig.get("icon", {})
-    ENV.globals.update(brand_dir=tokens["dir"],
-                       icon=lambda n, s: Markup(icon(n, round(s * ic.get("scale", 0.6)),
-                                                                              ic.get("stroke", 1.5))))
+    BRAND_DIR["dir"] = tokens["dir"]
+    GLOBALS["icon"] = lambda n, s: Markup(icon(n, round(s * ic.get("scale", 0.6)), ic.get("stroke", 1.5)))
     family, _, variant = spec["layout"].partition("/")
+    if spec.get("html"):  # custom markup gets the same brand-scaled icon() as the templates
+        spec = {**spec, "html": ENV.from_string(spec["html"]).render()}
     css = tokens["dir"] / "assets/brand.css"
     return ENV.get_template(f"{family}.html.j2").render(
         spec=spec, variant=variant, items=spec.get("items", []), columns=spec.get("columns", []),
@@ -139,7 +143,7 @@ def build(spec, force=False):
     checks = shoot(html, png, tokens)
     im = Image.open(png)
     w = CFG["critic"]["preview_width"]
-    im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(preview)
+    im.resize((w, round(im.height * w / im.width)), Image.Resampling.LANCZOS).save(preview)
     return {"version": n, "html": str(html), "png": str(png), "preview": str(preview), "size": list(im.size),
             "brand_version": tokens.get("brand_version"), "auto_checks": checks,
             "critic_rules": [str(p) for p in tokens["critic_rules"]], "revisions_left": max_v - n}
@@ -168,7 +172,10 @@ def export(html, formats):
     """Export an approved version (vN.html) as svg / pdf / jpeg next to it. PNG already exists."""
     from playwright.sync_api import sync_playwright
     html = Path(html).resolve()
-    width = int(re.search(r"body \{ width: (\d+)px", html.read_text()).group(1))
+    m = re.search(r"body \{ width: (\d+)px", html.read_text())
+    if not m:
+        raise SystemExit(f"{html} is not a render.py page (no body width)")
+    width = int(m.group(1))
     files = {}
     if {"svg", "pdf"} & set(formats):
         pdf = html.with_suffix(".pdf")
@@ -179,7 +186,7 @@ def export(html, formats):
             page.evaluate("document.fonts.ready")
             h = page.evaluate("document.querySelector('#canvas').scrollHeight")
             page.pdf(path=str(pdf), width=f"{width}px", height=f"{h + 1}px", print_background=True, page_ranges="1",
-                     margin={k: "0" for k in ("top", "right", "bottom", "left")})
+                     margin={"top": "0", "right": "0", "bottom": "0", "left": "0"})
             b.close()
         if "svg" in formats:
             files["svg"] = html.with_suffix(".svg")

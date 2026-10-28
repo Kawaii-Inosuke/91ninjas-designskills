@@ -56,6 +56,7 @@ heading + body as it will appear, icons (search with `skill/render.py icons <wor
 Write the spec to `output/<client>/<slug>/spec.json` (fields documented at the top of `skill/render.py`), then
 `.venv/bin/python skill/render.py build --spec output/<client>/<slug>/spec.json`
 For `custom` layouts write `html` using brand classes (`.card .pill .h .b .bullets .marker .takeaway`) and CSS variables only.
+Insert icons only as `{{ icon('name', <tile px>) }}` (never pasted SVG): it applies the brand's icon scale and stroke.
 
 ## 8. Critic loop (max 3 revisions)
 Each pass:
